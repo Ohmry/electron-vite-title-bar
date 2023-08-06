@@ -1,0 +1,64 @@
+{
+  "name": "@ohmry/electron-vite-title-bar",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/components.cjs.js",
+  "module": "./dist/components.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/components.cjs.js",
+      "require": "./dist/components.es.js"
+    },
+    "./dist/style.css": "./dist/style.css",
+    "./preloader": {
+      "import": "./dist/preloader.cjs.js",
+      "require": "./dist/preloader.es.js"
+    },
+    "./loader": {
+      "import": "./dist/loader.cjs.js",
+      "require": "./dist/loader.es.js"
+    }
+  },
+  "version": "1.0.0",
+  "type": "module",
+  "author": "Ohmry <o.ohmry@gmail.com>",
+  "description": "Component that using instead of window title bar in frameless electron-vite",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ohmry/electron-vite-title-bar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ohmry/electron-vite-title-bar/issues"
+  },
+  "homepage": "https://github.com/Ohmry/electron-vite-title-bar#readme",
+  "keywords": [
+    "electron-vite",
+    "title-bar",
+    "electron-vite-title-bar",
+    "titlebar",
+    "menu",
+    "window-menu",
+    "electron",
+    "vuejs",
+    "vite"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "cd ./preview & yarn dev"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.4"
+  },
+  "dependencies": {
+    "mitt": "^3.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "@vue/compiler-sfc": "^3.3.4",
+    "vite": "^4.4.5",
+    "vue": "^3.3.4"
+  }
+}
