@@ -20,7 +20,7 @@
       "require": "./dist/loader.es.js"
     }
   },
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "author": "Ohmry <o.ohmry@gmail.com>",
   "description": "Component that using instead of window title bar in frameless electron-vite",
