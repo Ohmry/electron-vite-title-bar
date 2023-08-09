@@ -19,7 +19,7 @@
 import './electron-vite-title-bar-style.css'
 import { onBeforeMount, onMounted, ref, computed } from 'vue'
 import ElectronViteTitleBarButton from './ElectronViteTitleBarButton.vue'
-import electronViteTitleBarMenu from './electron-vite-title-bar-menu'
+import ElectronViteTitleBarMenu from './electron-vite-title-bar-menu'
 
 // Props 설정
 // icon: 타이틀바의 가장 우측에 표시할 아이콘에 대한 경로
@@ -40,11 +40,12 @@ const props = defineProps({
 })
 
 // 각 버튼에 대한 이벤트를 상위 컴포넌트에 전달하기 위한 Emit 설정
-const emit = defineEmits(['onMinimize', 'onMaximize', 'onRestore', 'onClose', 'onMenuClick'])
+const emitter = defineEmits(['onMenuClick'])
 
 const container = ref()
 // isWindowMaximized: 윈도우가 현재 최대화 상태인지 아닌지 나타내는 값
 const isWindowMaximized = ref(false)
+let electronViteTitleBarMenu = undefined
 
 const onMinimize = () => window.evtb.minimize()
 const onMaximize = () => window.evtb.maximize()
@@ -53,10 +54,15 @@ const onClose = () => window.evtb.close()
 
 onBeforeMount(() => {
   // Props에 메뉴에 대한 정보가 전달되었을 때, DOM을 생성하기 전에 데이터에 대한 유효성 검사를 수행한다.
-  if (props.menu) electronViteTitleBarMenu.validateMenu(props.menu)  
+  // if (props.menu) electronViteTitleBarMenu.validateMenu(props.menu)  
 })
 
 onMounted(async () => {
+  const menuContainer = document.querySelector('section.evtb-menu-container')
+  const titleContainer = document.querySelector('section.evtb-title-container')
+
+  electronViteTitleBarMenu = new ElectronViteTitleBarMenu(menuContainer, container.value, titleContainer, emitter)
+/*
   if (props.menu) {
     const menuContainer = document.querySelector('section.evtb-menu-container')
     const titleContainer = document.querySelector('section.evtb-title-container')
@@ -75,6 +81,7 @@ onMounted(async () => {
   window.addEventListener('resize', async (e) => {
     isWindowMaximized.value = await window.evtb.isMaximized()  
   })
+  */
 })
 </script>
 <style>

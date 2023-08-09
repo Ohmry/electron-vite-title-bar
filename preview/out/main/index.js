@@ -4,7 +4,7 @@ const path = require("path");
 const utils = require("@electron-toolkit/utils");
 const icon = path.join(__dirname, "../../resources/icon.png");
 class ElectronVueTitleBarLoader {
-  initialize = (mainWindow) => {
+  initialize(mainWindow) {
     electron.ipcMain.handle("evtb:isMaximized", () => {
       return mainWindow.isMaximized();
     });
@@ -20,7 +20,7 @@ class ElectronVueTitleBarLoader {
     electron.ipcMain.handle("evtb:close", () => {
       mainWindow.close();
     });
-  };
+  }
 }
 const electronViteTitleBarLoader = new ElectronVueTitleBarLoader();
 function createWindow() {
