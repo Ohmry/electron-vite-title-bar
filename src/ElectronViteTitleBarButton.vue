@@ -1,6 +1,6 @@
 <template>
   <button ref="button" class="evtb-button" :class="{ close: props.role == 'close' }">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" :style="{ width: iconWidth + 'px', height: iconHeight + 'px' }">
+    <svg ref="buttonSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" :style="{ width: iconWidth + 'px', height: iconHeight + 'px' }">
       <path :d="iconPath"/>
     </svg>
   </button>
@@ -9,6 +9,7 @@
 import { computed, onMounted, onBeforeMount, ref } from 'vue'
 
 const button = ref()
+const buttonSvg = ref()
 const props = defineProps({
   role: {
     type: String,
@@ -70,10 +71,20 @@ onMounted(() => {
       button.value.classList.remove('hover')
     }
   })
+  document.addEventListener('mouseup', (e) => {
+    if (e.target != button.value && e.target != buttonSvg.value) {
+      if (button.value.classList.contains('active')) {
+        button.value.classList.remove('active')
+      }
+      if (button.value.classList.contains('hover')) {
+        button.value.classList.remove('hover')
+      }
+    }
+  })
 })
 </script>
-<style scoped>
-button {
+<style>
+button.evtb-button {
   border: 0;
   padding: 0 5px;
   height: 30px;
@@ -85,34 +96,34 @@ button {
   -webkit-app-region: no-drag;
   outline: 0;
 }
-button > svg {
+button.evtb-button > svg {
   width: 1.2em;
   height: 1.2em;
   user-select: none;
   fill: var(--evtb-menu-button-icon-color);
 }
-button.hover {
+button.evtb-button.hover {
   background-color: var(--evtb-menu-button-hover-background-color);
 }
-button.hover > svg {
+button.evtb-button.hover > svg {
   fill: var(--evtb-menu-button-hover-icon-color);
 }
-button.hover.close {
+button.evtb-button.hover.close {
   background-color: var(--evtb-menu-button-close-hover-background-color);
 }
-button.hover.close > svg {
+button.evtb-button.hover.close > svg {
   fill: var(--evtb-menu-button-close-hover-icon-color);
 }
-button.active {
+button.evtb-button.active {
   background-color: var(--evtb-menu-button-active-background-color);
 }
-button.active > svg {
+button.evtb-button.active > svg {
   fill: var(--evtb-menu-button-active-icon-color);
 }
-button.active.close {
+button.evtb-button.active.close {
   background-color: var(--evtb-menu-button-close-active-background-color);
 }
-button.active.close > svg {
+button.evtb-button.active.close > svg {
   fill: var(--evtb-menu-button-close-active-icon-color);
 }
 </style>
