@@ -1,7 +1,8 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-import electronViteTitleBarPreloader from '../../../src/electron-vite-title-bar-preloader'
+import ElectronViteTitleBarPreloader from '../../../src/electron-vite-title-bar-preloader'
+const electronViteTitleBarPreloader = new ElectronViteTitleBarPreloader()
 electronViteTitleBarPreloader.initialize()
 
 // Custom APIs for renderer

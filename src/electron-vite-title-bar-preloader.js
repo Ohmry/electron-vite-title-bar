@@ -22,4 +22,4 @@ class ElectronVueTitleBarPreloader {
   }
 }
 
-export default new ElectronVueTitleBarPreloader()
+export default ElectronVueTitleBarPreloader

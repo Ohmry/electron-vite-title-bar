@@ -25,7 +25,7 @@ const menu = [
     subMenu: [
       { label: 'Undo' },
       { label: 'Redo' },
-      { seperator: true },
+      { separator: true },
       { label: 'Cut', hotKey: 'Ctrl+X' },
       { label: 'Copy', hotKey: 'Ctrl+C' },
       { label: 'Paste', hotKey: 'Ctrl+V' }
@@ -43,7 +43,7 @@ const menu = [
     subMenu: [
       { label: 'View License' },
       { label: 'Report Issue' },
-      { seperator: true},
+      { separator: true},
       { label: 'About' }
     ]
   }

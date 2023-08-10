@@ -3,7 +3,8 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-import electronViteTitleBarLoader from '../../../src/electron-vite-title-bar-loader'
+import ElectronViteTitleBarLoader from '../../../src/electron-vite-title-bar-loader'
+const electronViteTitleBarLoader = new ElectronViteTitleBarLoader()
 
 function createWindow() {
   // Create the browser window.

@@ -17,13 +17,10 @@
 </template>
 <script setup>
 import './electron-vite-title-bar-style.css'
-import { onBeforeMount, onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import ElectronViteTitleBarButton from './ElectronViteTitleBarButton.vue'
-import electronViteTitleBarMenu from './electron-vite-title-bar-menu'
+import ElectronViteTitleBarMenu from './electron-vite-title-bar-menu'
 
-// Props 설정
-// icon: 타이틀바의 가장 우측에 표시할 아이콘에 대한 경로
-// menu: 타이틀바에 생성할 메뉴에 대한 객체
 const props = defineProps({
   icon: {
     type: String,
@@ -39,38 +36,32 @@ const props = defineProps({
   }
 })
 
-// 각 버튼에 대한 이벤트를 상위 컴포넌트에 전달하기 위한 Emit 설정
-const emit = defineEmits(['onMinimize', 'onMaximize', 'onRestore', 'onClose', 'onMenuClick'])
 
+const emitter = defineEmits(['onMenuClick'])
 const container = ref()
-// isWindowMaximized: 윈도우가 현재 최대화 상태인지 아닌지 나타내는 값
 const isWindowMaximized = ref(false)
+let electronViteTitleBarMenu = undefined
 
 const onMinimize = () => window.evtb.minimize()
 const onMaximize = () => window.evtb.maximize()
 const onRestore = () => window.evtb.restore()
 const onClose = () => window.evtb.close()
 
-onBeforeMount(() => {
-  // Props에 메뉴에 대한 정보가 전달되었을 때, DOM을 생성하기 전에 데이터에 대한 유효성 검사를 수행한다.
-  if (props.menu) electronViteTitleBarMenu.validateMenu(props.menu)  
-})
-
 onMounted(async () => {
   if (props.menu) {
     const menuContainer = document.querySelector('section.evtb-menu-container')
     const titleContainer = document.querySelector('section.evtb-title-container')
 
-    electronViteTitleBarMenu.initialize(container.value, menuContainer, titleContainer, emit)
-    electronViteTitleBarMenu.createRootMenu(props.menu)
+    electronViteTitleBarMenu = new ElectronViteTitleBarMenu(menuContainer, container.value, titleContainer, emitter)
+    electronViteTitleBarMenu.setMenuInfo(props.menu)
+    electronViteTitleBarMenu.createRootMenu()
 
-    // 윈도우의 프레임이 변경되었을 때, 너비에 따라 루트 메뉴를 재생성할 수 있도록
-    // 이벤트를 구성한다.
-    window.addEventListener('resize', (e) => {
-      electronViteTitleBarMenu.createRootMenu(props.menu)
+    // Add event that recreates root menu when size of window frame is changed.
+    window.addEventListener('resize', () => {
+      electronViteTitleBarMenu.createRootMenu()
     })
   }
-
+  
   isWindowMaximized.value = await window.evtb.isMaximized()
   window.addEventListener('resize', async (e) => {
     isWindowMaximized.value = await window.evtb.isMaximized()  
@@ -196,9 +187,9 @@ section.evtb-menu-container > ul:not([level="0"]) > li[type="menu"] > svg {
   height: 1.8em;
   fill: var(--evtb-menu-item-expand-icon-fill-color);
 }
-section.evtb-menu-container > ul:not([level="0"]) > li[type="seperator"] {
+section.evtb-menu-container > ul:not([level="0"]) > li[type="separator"] {
   height: 1px;
-  border-top: 1px solid var(--evtb-menu-item-seperator-color);
+  border-top: 1px solid var(--evtb-menu-item-separator-color);
   padding: 0;
   margin: 4px 0 2.8px 0;
 }
