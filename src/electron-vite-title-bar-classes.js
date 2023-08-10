@@ -5,3 +5,7 @@ class MenuValidation {
     this.menuInfo = menuInfo
   }
 }
+
+export {
+  MenuValidation
+}

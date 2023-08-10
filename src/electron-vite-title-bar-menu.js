@@ -1,4 +1,4 @@
-import './electron-vite-title-bar-classes'
+import { MenuValidation } from './electron-vite-title-bar-classes.js'
 
 // SVG Path value of icon for indicate has sub menu
 const expandSubMenuSvgPath = 'M543.846-480.231 353.538-671.308l22.231-22.231 212.539 213.308-212.539 212.539-22.231-22.231 190.308-190.308Z'
@@ -44,7 +44,7 @@ class ElectronViteTitleBarMenu {
    * @param {list of menu info that is consist of JSON Array} menuList 
    */
   setMenuInfo (menuList) {
-    if (Array.isArray(menuList)) {
+    if (!Array.isArray(menuList)) {
       throw TypeError(`menuList must be Array. but got ${menuList ? menuList.constructor.name : menuList}.`)
     }
 
@@ -65,16 +65,19 @@ class ElectronViteTitleBarMenu {
    */
   validateMenuInfo (menuInfo) {
     if (menuInfo.label == undefined && !menuInfo.separator) {
-      return MenuValidation(false, `menuInfo needs 'label' or 'separator'.`, menuInfo)
+      return new MenuValidation(false, `menuInfo needs 'label' or 'separator'.`, menuInfo)
     } else if (menuInfo.label != undefined && menuInfo.separator) {
-      return MenuValidation(false, `menuInfo can't have both 'label' and 'separator'`, menuInfo)
+      return new MenuValidation(false, `menuInfo can't have both 'label' and 'separator'`, menuInfo)
     } else if (menuInfo.hotKey != undefined && menuInfo.subMenu != undefined) {
-      return MenuValidation(false, `menuInfo can't have both 'hotKey' and 'subMenu'`, menuInfo)
+      return new MenuValidation(false, `menuInfo can't have both 'hotKey' and 'subMenu'`, menuInfo)
     }
 
-    if (menuInfo.separator) return
+    if (menuInfo.separator) return new MenuValidation(true, `success`, menuInfo)
     if (menuInfo.hotKey) {
-
+      const validation = this.addHotkeyEventListener(menuInfo)
+      if (!validation.success) {
+        return validation
+      }
     }
     if (menuInfo.subMenu != undefined) {
       for (const subMenuInfo of menuInfo.subMenu) {
@@ -84,7 +87,7 @@ class ElectronViteTitleBarMenu {
         }
       }
     }
-    return MenuValidation(ture, `success`, menuInfo)
+    return new MenuValidation(true, `success`, menuInfo)
   }
 
   /**
@@ -125,8 +128,6 @@ class ElectronViteTitleBarMenu {
       }
     }
 
-    this.addMenuDestroyListener()
-
     // If when create menu, doesn't created all menu
     // create collapse menu includes all remain menu by menu item.
     if (index != this.menuList.length) {
@@ -145,23 +146,38 @@ class ElectronViteTitleBarMenu {
       for (index; index < this.menuList.length; index++) {
         collapseMenu.subMenu.push(this.menuList[index])
       }
-
       this.addMenuClickListener(collapseElement, 0, collapseMenu)
       this.addMenuOverListener(collapseElement, 0, collapseMenu)
     }
+
+    this.addMenuCloseListener()
   }
 
-  createMenu (root, level, menuList) {
+  /**
+   * Created submenu when a specific menu is clicked.
+   * @param {<ul> element that clicked} parentElement 
+   * @param {level of menu} level 
+   * @param {submenu list} subMenuList 
+   */
+  createMenu (parentElement, level, subMenuList) {
+    if (!(parentElement instanceof HTMLElement || parentElement == null)) {
+      throw TypeError(`parentElement must be HTMLElement or null. but got ${parentElement ? parentElement.constructor.name : parentElement}`)
+    }
     const group = this.createMenuGroup(level)
-    if (root) {
-      this.adjustGroupPosition(root, level, group)
+
+    // When parentElement is not null
+    // submenu group element set position as right side of parentElement
+    if (parentElement) {
+      this.adjustGroupPosition(parentElement, level, group)
     }
 
+    // When selected menu is changed
+    // add .selected class to the selected menu and remove .selected class from previous selected menu
     if (level > 0) {
-      this.setMenuSelected(level - 1, root)
+      this.setMenuSelected(level - 1, parentElement)
     }
 
-    menuList.forEach(menuInfo => {
+    subMenuList.forEach(menuInfo => {
       const element = this.createMenuItem(level, menuInfo)
       group.appendChild(element)
     })
@@ -169,6 +185,11 @@ class ElectronViteTitleBarMenu {
     this.container.appendChild(group)
   }
 
+  /**
+   * Create an <ul> element to contains <li> element which is menu items.
+   * @param {level of menu} level 
+   * @returns <ul> element
+   */
   createMenuGroup (level) {
     const group = document.createElement('ul')
     group.setAttribute('level', String(level))
@@ -176,7 +197,13 @@ class ElectronViteTitleBarMenu {
     return group
   }
 
-  adjustGroupPosition (parentElement, level, element) {
+  /**
+   * Adjust position of group element based on parentElement.
+   * @param {<ul> element that clicked} parentElement 
+   * @param {level of menu} level 
+   * @param {<ul> element for constain <li> element which is menu items.} group 
+   */
+  adjustGroupPosition (parentElement, level, group) {
     let top = 0
     let left = 0
 
@@ -194,11 +221,17 @@ class ElectronViteTitleBarMenu {
       top += 10
     }
 
-    element.style.top = Math.floor(top) + 'px'
-    element.style.left = left + 'px'
+    group.style.top = Math.floor(top) + 'px'
+    group.style.left = left + 'px'
   }
 
-  crateMenuItem (level, menuInfo) {
+  /**
+   * Create an <li> element which represents menu.
+   * @param {level of menu} level 
+   * @param {information of menu} menuInfo 
+   * @returns <li> Element
+   */
+  createMenuItem (level, menuInfo) {
     const element = document.createElement('li')
     if (menuInfo.separator) {
       element.setAttribute('type', 'separator')
@@ -222,7 +255,10 @@ class ElectronViteTitleBarMenu {
     return element
   }
 
-  addMenuDestroyListener () {
+  /**
+   * Add event to close the menu when user clicks outside the menu.
+   */
+  addMenuCloseListener () {
     document.addEventListener('click', (e) => {
       let isMenuClicked = false
 
@@ -234,16 +270,21 @@ class ElectronViteTitleBarMenu {
       })
       
       if (!isMenuClicked) {
-        this.destroyMenuGroup(1)
+        this.closeMenuGroup(1)
         this.isMenuActivated = false
       }
     })
   }
 
+  /**
+   * Add hotkey event to execute menu when user press hotkey on application.
+   * @param {information of menu} menuInfo 
+   * @returns 
+   */
   addHotkeyEventListener (menuInfo) {
-    const hotkey = menuInfo.hotkey
+    const hotkey = menuInfo.hotKey
     if (hotkey == undefined || hotkey == null) {
-      return MenuValidation(false, `hotkey value must be String. but got ${hotkey}.`)
+      return new MenuValidation(false, `hotkey value must be String. but got ${hotkey}.`)
     } else {
       window.addEventListener('keydown', (e) => {
         const keys = hotkey.split('+')
@@ -270,49 +311,65 @@ class ElectronViteTitleBarMenu {
 
         if (e.ctrlKey == hasCtrl && e.altKey == hasAlt && e.shiftKey == hasShift && e.key.toUpperCase() == keys[0].toUpperCase()) {
           e.preventDefault()
-          this.destroyMenuGroup(1)
+          this.closeMenuGroup(1)
           this.isMenuActivated = false
           this.emitter('onMenuClick', menuInfo.label)
         }
       })
-      return MenuValidation(true, 'success', menuInfo)
+      return new MenuValidation(true, 'success', menuInfo)
     }
   }
 
+  /**
+   * Add event to execute menu clicked or create submenu when user click menu item.
+   * @param {<li> element of menu that user clicked} menuElement 
+   * @param {level of menu} level 
+   * @param {information of menu} menuInfo 
+   */
   addMenuClickListener (menuElement, level, menuInfo) {
     menuElement.addEventListener('click', (e) => {
       e.stopPropagation()
       if (menuInfo.subMenu != undefined) {
         const selectedElement = this.getMenuSelected(level)
         if (menuElement == selectedElement && level == 0) {
-          this.destroyMenuGroup(1)
+          this.closeMenuGroup(1)
           this.setMenuSelected(level, null)
           this.isMenuActivated = false
         } else {
-          this.destroyMenuGroup(level + 1)
+          this.closeMenuGroup(level + 1)
           this.createMenu(menuElement, level + 1, menuInfo.subMenu)
           this.isMenuActivated = true
         }
       } else {
-        this.destroyMenuGroup(1)
+        this.closeMenuGroup(1)
         this.isMenuActivated = false
         this.emitter('onMenuClick', menuInfo.label)
       }
     })
   }
 
+  /**
+   * Add event that creates a submenu when a mouseover event occurs while the menu is active.
+   * @param {<li> element of menu that user clicked} menuElement 
+   * @param {level of menu} level 
+   * @param {information of menu} menuInfo 
+   */
   addMenuOverListener (menuElement, level, menuInfo) {
     menuElement.addEventListener('mouseover', (e) => {
       e.stopPropagation()
       if (!this.isMenuActivated) return
-      this.destroyMenuGroup(level + 1)
+      this.closeMenuGroup(level + 1)
       if (menuInfo.subMenu != undefined) {
         this.createMenu(menuElement, level + 1, menuInfo.subMenu)
       }
     })
   }
 
-  destroyMenuGroup (level) {
+  /**
+   * Close all groups of menu more then level
+   * @param {level of menu} level 
+   */
+  closeMenuGroup (level) {
     const groups = this.container.querySelectorAll('ul.evtb-menu-group')
     groups.forEach(group => {
       const groupLevel = Number(group.getAttribute('level'))
@@ -325,6 +382,11 @@ class ElectronViteTitleBarMenu {
     })
   }
 
+  /**
+   * Add .selected class to the selected menu and remove .selected class from previous selected menu
+   * @param {level of menu} level 
+   * @param {<li> element that clicked} clickedElement 
+   */
   setMenuSelected (level, clickedElement) {
     if (!(clickedElement instanceof HTMLLIElement || clickedElement == null)) {
       throw TypeError(`clickedElement must be HTMLLIElement or null. but got ${clickedElement ? clickedElement.constructor.name : clickedElement}.`)
@@ -340,6 +402,11 @@ class ElectronViteTitleBarMenu {
     })
   }
 
+  /**
+   * Return <li> element that has .selected class.
+   * @param {level of menu} level 
+   * @returns <li> element
+   */
   getMenuSelected (level) {
     return this.container.querySelector('li.evtb-menu-item-' + level + '.selected')
   }
